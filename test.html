@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- <meta http-equiv="X-UA-Compatible" content="IE=edge"> -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+
+    <title>Document</title>
+    <link rel="stylesheet" href="http://ajax.aspnetcdn.com/ajax/jquery.ui/1.10.3/themes/sunny/jquery-ui.css">
+</head>
+<body>
+    
+    <button onclick="getLocations();">Все площадки</button> <br>
+    <img src="" id="photo_example" alt="">
+    <button onclick="addLocation();">Добавить площадку</button> <br>
+    <span>Добавляются тестовые данные: Название - Тестовая площадка, координаты - 12.123, 13.123, описание - Тестовое описание, картинка - images/testpic.png</span>
+    <form id="location_image" action="" enctype="multipart/form-data">
+        <input id="location_file" type="file" name="file">
+    </form> <br>
+    <button onclick="moveLocation(3);">Передвинуть площадку</button> <br>
+    <button onclick="getTrees(1);">Все деревья площадки с id = 1</button> <br> 
+    <button onclick="addTree();">Добавить дерево</button> <br>
+    <span>Текстовые данные в функции, изображение: </span>
+    <form action="" enctype="multipart/form-data">
+        <input id="tree_file" type="file" name="file">
+    </form> <br>
+
+    <br> <br>
+    <button onclick="changeImageOfLocation(3)">Изменить картинку площадки</button>
+    <form action="" id="location_editimage" enctype="multipart/form-data">
+        <input id="location_file2" type="file" name="file">
+    </form> <br>
+    <br> <br>
+    <button onclick="editLocation(3)">Изменить площадку (текст без картинки)</button> <br> <br>
+    <button onclick="archiveTree(32);">Архивировать дерево</button> <br>
+    <button onclick="registrate();">Регистрация пользователя</button> <br>
+    <button onclick="login();">Вход (суперадмин: superadmin superadmin123456)</button> <br>
+    <button onclick="logout();">Выйти</button> <br>
+    <button onclick="getUsers();">Все пользователи</button> <br>
+    <span>Здесь же пример проверки на роль. Доступно только суперадмину, иначе в консоль выводится сообщение об отсутствии прав</span> <br>
+    <button onclick="getUsersByRole(0);">Все пользователи с ролью 0 (суперадмин)</button> <br>
+    <span>Здесь же пример проверки на роль. Доступно только суперадмину, иначе в консоль выводится сообщение об отсутствии прав</span> <br>
+    <button onclick="moveTree();">Передвинуть дерево</button> <br>
+    <button onclick="changeImageOfTree();">Изменить изображение дерева</button> <br>
+    <form action="" enctype="multipart/form-data">
+        <input id="tree_file2" type="file" name="file">
+    </form> <br>
+    <button onclick="editTree(32);">Редактировать дерево</button> <br> <br> <br>
+    <button onclick="getSpecies()">Все породы</button>
+    <button onclick="editSpecies(1);">Редактировать породу</button>
+    <button onclick="addSpecies();">Добавить породу</button>
+    <br>
+
+    <button onclick="addJson()">Добавить JSON в БД</button>
+    <br> <br> <br>
+
+    
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src='https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.0/jquery.min.js'></script>
+    <script src='https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js'></script>
+    <script>
+        var serverURL = 'http://greenmap/api'; /* адрес до сервера в целом. Для запросов */
+        var serverURL_pics = 'http://greenmap'; /* адрес до сервера для картинок */
+        // адреса для конкретных запросов
+        var url_getLocations = '/locations/getLocations';
+        var url_addLocation = '/locations/addLocation';
+        var url_moveLocation = '/locations/moveLocation';
+        var url_gettrees = '/trees/getTrees'; //+ id
+        var url_addtree = '/trees/addTree';
+        var url_archiveTree = '/trees/archiveTree';
+        var url_addUser = '/users/addUser';
+        var url_login = '/users/login';
+        var url_logout = '/users/logout';
+        var url_getUsers = '/users/getUsers';
+        var url_getUsersByRole = '/users/getUsersByRole';
+        var url_moveTree = '/trees/moveTree';
+        var url_changeImageOfTree = '/trees/changeImageOfTree';
+        var url_editTree = '/trees/editTree'; // текстовые данные
+        var url_editLocation = '/locations/editLocation'; // текстовые данные
+        var url_changeImageOfLocation = '/locations/changeImageOfLocation';
+        var url_fiterTrees = "/trees/filter";
+        var url_getSpecies = "/species/getSpecies";
+        var url_getOneSpecies = "/species/getSpecies"; //+ id
+        var url_editSpecies = "/species/editSpecies";
+        var url_addSpecies = "/species/addSpecies";
+        var url_addTrees = "/trees/addFewTrees"; // добавление нескольких деревьев без сохранения картинок. Рекомендуется при добавлении JSON 
+        var cookies = document.cookie;
+        console.log('cookies '+cookies);
+        console.log(getCookie('login')); // самописная функция, которая возвращает значение конкретного параметра
+
+        // async - функция асинхронная. работает без перезагрузки страницы параллельно основному процессу 
+        async function getLocations() {
+            // await - признак того, что метод работает асинхронно
+            await axios.get(serverURL + url_getLocations).then(response => {
+                locations = response.data; // Locations - json с полученными данными
+                console.log(locations); // здесь идет отображение данных
+                
+                // для примера одну картинку отобразим. приходит путь вида uploads/alkDjksdfneD.png и лежат они на сервере в папке uploads
+                let src = serverURL_pics + "/" + "uploads/KhyQDT6Rr8ab.png"; 
+                // заодно короткое введение в jQuery: $ здесь встречается повсеместно и заменяет document.querySelectorAll. В скобках пишется селектор нужного/нужных элементов. Дальше с ними делаются нужные операции. например, метод attr задает значение атрибуту. А если в него поставить один аргумент, то он будет не изменять значение, а возвращать его
+                $("#photo_example").attr('src', src);
+                console.log($("#photo_example").attr('src'));
+            });
+        }
+
+
+        async function moveLocation(id) {
+            console.log(id);
+            var jsonbody = {};
+
+            jsonbody['location_id'] = id;
+            jsonbody['latitude'] = 12.0;
+            jsonbody['longitude'] = 23.0;
+            console.log(jsonbody);
+            await axios.post(serverURL + url_moveLocation, JSON.stringify(jsonbody)).then(response => {
+				console.log(response.data);
+			}).catch((error) => {
+				console.log(error)
+			});
+        }
+
+        async function addLocation() {
+            var jsonbody = {}; // заполнение json, будет браться из инпутов или что-то вроде, пока просто наобум 
+
+            var data2 = new FormData(); // сюда будут сохраняться данные и файлы (если есть)
+
+        // добавляем файл. на сервере картинка будет доступна через ключ locationImage
+            data2.append('locationImage', $('#location_file').prop('files')[0]); /* location_file - id input type='file'. еще нужна проверка, что фото заполнено */
+            // для примера - Pole может браться из name инпута
+            let value = 'Тестовое название gkjoflrsfv'; // что-то вроде $('#input-name').getAttr('value')
+            // jsonbody[pole] = value;
+            // все остальные подобным образом. сократим: 
+            jsonbody['latitude_center'] = 1.0;
+            jsonbody['longitude_center'] = 2.123;
+            jsonbody['name'] = value;
+            // добавляем получившийся jsonbody через blob, поскольку у нас есть картинка. данные доступны через клч jsonbody
+            const blob = new Blob([JSON.stringify(jsonbody)], {
+				type: 'application/json'
+			});
+            data2.append('jsonbody', blob);
+            
+            // будьте готовы: у класса FormData нет метода toString, поэтому вывести data2 в консоль не получится.
+
+			await axios.post(serverURL + url_addLocation, data2).then(response => {
+				console.log(response.data);
+			}).catch((error) => {
+				console.log(error)
+			});
+        }
+
+        async function changeImageOfLocation(id) {
+            var jsonbody = {}; // заполнение json, будет браться из инпутов или что-то вроде, пока просто наобум 
+
+            var data4 = new FormData(); // сюда будут сохраняться данные и файлы (если есть)
+
+            // добавляем файл. на сервере картинка будет доступна через ключ locationImage
+            data4.append('locationImage', $('#location_file2').prop('files')[0]); /* location_file2 - id input type='file'. еще нужна проверка, что фото заполнено */
+            // FK
+            jsonbody['location_id'] = id;
+
+            // добавляем получившийся jsonbody через blob, поскольку у нас есть картинка. данные доступны через клч jsonbody
+            const blob = new Blob([JSON.stringify(jsonbody)], {
+                type: 'application/json'
+            });
+            data4.append('jsonbody', blob);
+
+            await axios.post(serverURL + url_changeImageOfLocation, data4).then(response => {
+                console.log(response.data);
+            }).catch((error) => {
+                console.log(error)
+            });
+        }
+
+        async function editLocation(location_id) {
+            var jsonbody = {};
+            jsonbody['location_id'] = location_id;
+            jsonbody['name'] = "ИЗМЕНИЛОСЬ jhvvhn";
+            jsonbody['latitude'] = 211;
+            jsonbody['longitude'] = 2123;
+            
+            await axios.post(serverURL + url_editLocation, JSON.stringify(jsonbody)).then(response => {
+				console.log(response.data);
+			}).catch((error) => {
+				console.log(error);
+			});
+        }
+
+        async function getTrees(location_id) {
+            // это get-Запрос, поэтому id тоже пойдет с url
+            await axios.get(serverURL + url_gettrees + '/' + location_id).then(response => {
+                trees = response.data; // trees - json с полученными данными
+                console.log(trees); // здесь идет отображение данных
+                // обратите внимание: инсерт с joinами, поэтому есть не только id статуса, породы и площадки, но и их названия (name_location, name_species, name_status)
+                let photo = trees[0]['photo'];
+                if (photo) {
+                    $("#photo_example").attr('src', serverURL_pics + "/" + photo);
+                }
+                else {
+                    $("#photo_example").attr('src', serverURL_pics + "/uploads/default_tree.jpg");
+                }
+            });
+        }
+        
+
+        async function addTree() {
+            var jsonbody = {}; // заполнение json, будет браться из инпутов или что-то вроде, пока просто наобум 
+
+            var data2 = new FormData(); // сюда будут сохраняться данные и файлы (если есть)
+
+            // добавляем файл. на сервере картинка будет доступна через ключ treeImage
+            data2.append('treeImage', $('#tree_file').prop('files')[0]); /* tree_file - id input type='file'. еще нужна проверка, что фото заполнено */
+            // FK
+            jsonbody['species'] = 1;
+            jsonbody['name'] = "туя красивая обыкновенная";
+            jsonbody['location'] = 1;
+            // координаты - массив с double. Сначала latitude, потом longitude
+            jsonbody['coordinates'] = [51.445, 45.345];
+            // в сантиметрах
+            jsonbody['cdiameter'] = 123;
+            jsonbody['height'] = 123;
+            jsonbody['tdiameter'] = 45;
+            // год (для возраста)
+            jsonbody['year'] = 2001;
+            // boolean (0 or 1)
+            jsonbody['dry'] = 0;
+            jsonbody['detachment'] = 0;
+            jsonbody['cracks'] = 0;
+            jsonbody['drips'] = 0;
+            jsonbody['overhanging_t'] = 0;
+            jsonbody['overhanging_p'] = 0;
+            jsonbody['overhanging_d'] = 0;
+            // комментарий. если нет, то null Или пустую строку
+            jsonbody['overhanging_comments'] = 'Тест коммент';
+            // в градусах наклон. Если пользователь не указал, ставьте 0
+            jsonbody['tilt'] = 45;
+
+            // archive ставится ноль (дерево не в архиве). tree_number выставляется автоматически через триггер в БД
+
+            // добавляем получившийся jsonbody через blob, поскольку у нас есть картинка. данные доступны через клч jsonbody
+            const blob = new Blob([JSON.stringify(jsonbody)], {
+                type: 'application/json'
+            });
+            data2.append('jsonbody', blob);
+
+            // будьте готовы: у класса FormData нет метода toString, поэтому вывести data2 в консоль не получится.
+
+            await axios.post(serverURL + url_addtree, data2).then(response => {
+                console.log(response.data);
+            }).catch((error) => {
+                console.log(error)
+            });
+        }
+
+        async function archiveTree(id) {
+            var jsonbody = {};
+            jsonbody['tree_id'] = id;
+            jsonbody['archive'] = 1; // 0 - дерево нужно разархивировать, 1 - архивировать
+            await axios.post(serverURL + url_archiveTree, JSON.stringify(jsonbody)).then(response => {
+				console.log(response.data);
+			}).catch((error) => {
+				console.log(error);
+			});
+        } 
+
+
+        async function registrate() {
+            var jsonbody = {};
+            jsonbody['login'] = 'superadmin22';
+            jsonbody['password'] = 'superadmin123456';
+            jsonbody['name'] = 'Супер';
+            jsonbody['surname'] = 'Администратор';
+            jsonbody['patronymic'] = '';
+            jsonbody['role'] = 1;
+            await axios.post(serverURL + url_addUser, JSON.stringify(jsonbody)).then(response => {
+				console.log(response.data);
+			}).catch((error) => {
+				console.log(error);
+                // если ошибка, значит скорее всего уже есть такой логин. Надо сообщить об этом пользователю
+			});
+        }
+
+        async function login() {
+            var jsonbody = {};
+            jsonbody['login'] = 'superadmin';
+            jsonbody['password'] = 'superadmin123456';
+
+            await axios.post(serverURL + url_login, JSON.stringify(jsonbody)).then(response => {
+				console.log(response.data);
+                localStorage.setItem('id', response.data.id);
+                localStorage.setItem('role', response.data.role);
+			}).catch((error) => {
+				console.log(error)
+			});
+            
+        }
+
+        async function logout() {
+            // поскольку авторизован ли пользователь хранится в localstorage, logout не требует обращения к серверу
+            if (localStorage.getItem("id")) {
+                console.log('logged');
+                localStorage.removeItem('id');
+                localStorage.removeItem('role');
+            } else {
+                console.log('not logged');
+                console.log('Ошибка - вы не вошли в систему, чтобы из нее выходить');
+            }
+        }
+
+        
+        async function getUsers() {
+            // здесь же еще пример проверки на роль. имеет ли право пользователь это делать? допустим, если это может только суперадмин: 
+            role = localStorage.getItem("role");
+            if (role != 1) {
+                console.log('У вас нет прав, нужны права суперадмина')
+            } else {  
+                await axios.get(serverURL + url_getUsers).then(response => {
+                    users = response.data; // locations - json с полученными данными
+                    console.log(users); // здесь идет отображение данных
+                });
+            }
+        }
+
+        async function getUsersByRole(role) {
+            // тоже проверка на роль, как в getUsers
+            var jsonbody = {};
+            jsonbody['role'] = role;
+            await axios.post(serverURL + url_getUsersByRole, JSON.stringify(jsonbody)).then(response => {
+				console.log(response.data);
+			}).catch((error) => {
+				console.log(error)
+			});
+        }
+
+        async function moveTree() {
+            let lat = 1.0;
+            let long = 1.0;
+            let tree_id = 32;
+
+            var jsonbody = {};
+            // тут координаты - не массив
+            jsonbody['latitude'] = lat;
+            jsonbody['longitude'] = long;
+            jsonbody['tree_id'] = tree_id;
+
+            await axios.post(serverURL + url_moveTree, JSON.stringify(jsonbody)).then(response => {
+				console.log(response.data);
+			}).catch((error) => {
+				console.log(error)
+			});
+        }
+
+        async function changeImageOfTree() {
+            var jsonbody = {}; // заполнение json, будет браться из инпутов или что-то вроде, пока просто наобум 
+
+            var data3 = new FormData(); // сюда будут сохраняться данные и файлы (если есть)
+
+            // добавляем файл. на сервере картинка будет доступна через ключ locationImage
+            data3.append('treeImage', $('#tree_file2').prop('files')[0]); /* tree_file2 - id input type='file'. еще нужна проверка, что фото заполнено */
+            // FK
+            jsonbody['tree_id'] = 32;
+
+            // добавляем получившийся jsonbody через blob, поскольку у нас есть картинка. данные доступны через клч jsonbody
+            const blob = new Blob([JSON.stringify(jsonbody)], {
+                type: 'application/json'
+            });
+            data3.append('jsonbody', blob);
+
+            await axios.post(serverURL + url_changeImageOfTree, data3).then(response => {
+                console.log(response.data);
+            }).catch((error) => {
+                console.log(error)
+            });
+        }
+
+        async function editTree(tree_id) {
+            var jsonbody = {};
+            jsonbody['tree_id'] = tree_id;
+            jsonbody['species'] = 1;
+            jsonbody['name'] = "ИЗМЕНИЛОСЬ";
+            // jsonbody['id_location'] = 1; не редактируется
+            jsonbody['id_status'] = 1;
+            // координаты - double
+            jsonbody['coordinates'] = [51.445, 45.345];
+            // в сантиметрах
+            jsonbody['cdiameter'] = 123;
+            jsonbody['height'] = 123;
+            jsonbody['tdiameter'] = 45;
+            // год (для возраста)
+            jsonbody['year'] = 2001;
+            // boolean (0 or 1)
+            jsonbody['dry'] = 0;
+            jsonbody['bark'] = 0;
+            jsonbody['cracks'] = 0;
+            jsonbody['drips'] = 0;
+            jsonbody['detachment'] = 0;
+            jsonbody['overhanging_t'] = 0;
+            jsonbody['overhanging_p'] = 0;
+            jsonbody['overhanging_d'] = 0;
+            // комментарий. если нет, то null Или пустую строку
+            jsonbody['overhanging_comments'] = "НОВОЕ";
+            // в градусах наклон. Если пользователь не указал, ставьте 0
+            jsonbody['tilt'] = 45;
+            await axios.post(serverURL + url_editTree, JSON.stringify(jsonbody)).then(response => {
+				console.log(response.data);
+			}).catch((error) => {
+				console.log(error);
+                // если ошибка, значит скорее всего уже есть такой логин. Надо сообщить об этом пользователю
+			});
+        }
+
+
+        async function addJson() {
+            // name на данный момент превращается в 
+            let jsonbody = {
+                "trees": [{"id":10,"location":4,"coordinates":[51.540238,46.038464],"name":"Вишня","height":2.5,"photo":"11-14;вишня.jpg","icon":"deciduous_tree.svg","tdiameter":0.4,"cdiameter":2,"dry":false,"cracks":false,"detachment":false,"drips":false,"tilt":0,"overhanging_t":false,"overhanging_p":false,"overhanging_d":false,"overhanging_comment":""},{"id":11,"location":4,"coordinates":[51.540209,46.038456],"name":"Вишня","height":3,"photo":"11-14;вишня.jpg","icon":"deciduous_tree.svg","tdiameter":0.4,"cdiameter":2,"dry":false,"cracks":false,"detachment":false,"drips":false,"tilt":0,"overhanging_t":false,"overhanging_p":false,"overhanging_d":false,"overhanging_comment":""}]};
+            await axios.post(serverURL + url_addTrees, JSON.stringify(jsonbody)).then(response => {
+				console.log(response.data);
+			}).catch((error) => {
+				console.log(error);
+			});
+
+        }
+
+        async function getSpecies() {
+            axios.get(serverURL + url_getSpecies)
+            .then(response => console.log(response.data))
+            .catch(error => console.log(error));
+        }
+        async function addSpecies() {
+            var jsonbody = {};
+            jsonbody['name'] = "Новая порода";
+            axios.post(serverURL + url_addSpecies, JSON.stringify(jsonbody))
+            .then(response => console.log(response.data))
+            .catch(error => console.log(error));
+        }
+        async function editSpecies(id) {
+            var jsonbody = {};
+            jsonbody['id'] = id;
+            jsonbody['name'] = "Тополь";
+            axios.post(serverURL + url_editSpecies, JSON.stringify(jsonbody))
+            .then(response => console.log(response.data))
+            .catch(error => console.log(error));
+        }
+
+
+        function getCookie(cname) {
+            var name = cname + "=";
+            var decodedCookie = decodeURIComponent(document.cookie);
+            var ca = decodedCookie.split(';');
+            for(var i = 0; i <ca.length; i++) {
+                var c = ca[i];
+                while (c.charAt(0) == ' ') {
+                    c = c.substring(1);
+                }
+                if (c.indexOf(name) == 0) {
+                    return c.substring(name.length, c.length);
+                }
+            }
+            return "";
+        }
+
+    </script>
+</body>
+</html>

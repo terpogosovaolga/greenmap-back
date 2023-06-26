@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="http://ajax.aspnetcdn.com/ajax/jquery.ui/1.10.3/themes/sunny/jquery-ui.css">
+
+</head>
+<body>
+
+    <button onclick="getAges()">Возраст деревьев всех площадок</button>
+    <p>вернется количество деревьев count, год посадки year и возраст age</p>
+    <br> <br> <br>
+
+    <button onclick="getAgesOfLocation(1)">Возраст деревьев площадки 1</button>
+    <p>вернется количество деревьев count, год посадки year и возраст age</p>
+    <br> <br> <br>
+    
+    <button onclick="getSpecies()">Породы деревьев всех площадок</button>
+    <p>вернется количество деревьев count, id породы id_species и название породы species</p>
+    <br> <br> <br>
+
+    <button onclick="getSpeciesOfLocation(1)">Породы деревьев площадки 1</button>
+    <p>вернется количество деревьев count, id породы id_species и название породы species</p>
+    <br> <br> <br>
+
+    <button onclick="getCutCount()">Опиловка по всем площадкам - количество</button>
+    <p>вернется количество деревьев, нуждающихся в опиловке и не нуждающихся в формате массива [нуждающиеся, ненуждающиеся] </p>
+    <br> <br> <br>
+
+    <button onclick="getCutCountOfLocation(1)">Опиловка по площадке 1 - количество</button>
+    <p>вернется количество деревьев, нуждающихся в опиловке и не нуждающихся в формате массива [нуждающиеся, ненуждающиеся] </p>
+    <br> <br> <br>
+
+    
+    <button onclick="getCutCountWithLocations()">Опиловка по всем площадкам - количество, деленное на площадки</button>
+    <p>вернется массив с count (количество нуждающихся в опиловке), location (id площадки) и location_name (название площадки)</p>
+    <br> <br> <br>
+    
+
+    <button onclick="getCutReasons()">Причины опиловки по всем площадкам</button>
+    <p>вернется массив объектов с count и причиной спила reason. Причина спила обозначена по столбцу - можно исправить</p>
+
+    <button onclick="getCutReasonsOfLocation(1)">Причины опиловки по 1 площадке</button>
+    <p>вернется массив объектов с count и причиной спила reason. Причина спила обозначена по столбцу - можно исправить</p>
+
+
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src='https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.0/jquery.min.js'></script>
+    <script src='https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js'></script>
+    
+    <script>
+        var serverURL = 'http://greenmap/api'; /* адрес до сервера в целом. Для запросов */
+        
+        var url_ages = "/statistics/age";
+        var url_species = "/statistics/species";
+        var url_cutCount = "/statistics/cutCount";
+        var url_cutCountLocs = "/statistics/cutCountLocs";
+        var url_cutReasons = "/statistics/cutReasons";
+        async function getAges() {
+            await axios.get(serverURL + url_ages).then(response => {
+                data = response.data; // 
+                console.log(data); // 
+                
+            });
+        }
+        
+        async function getAgesOfLocation(location) {
+            // если нужно посмотреть по площадке, к адресу запроса добавляем через слеш id площадки
+            await axios.get(serverURL + url_ages + "/" + location).then(response => {
+                data = response.data; // 
+                console.log(data); // 
+                
+            });
+        }
+
+        async function getSpecies() {
+            await axios.get(serverURL + url_species).then(response => {
+                data = response.data; // 
+                console.log(data); // 
+            });
+        }
+        async function getSpeciesOfLocation(location_id) {
+            await axios.get(serverURL + url_species + "/" + location_id).then(response => {
+                data = response.data; // 
+                console.log(data); // 
+            });
+        }
+
+        async function getCutCount() {
+            await axios.get(serverURL + url_cutCount).then(response => {
+                data = response.data; // 
+                console.log(data); // 
+            });
+        }
+        async function getCutCountOfLocation(location_id) {
+            await axios.get(serverURL + url_cutCount+"/"+location_id).then(response => {
+                data = response.data; // 
+                console.log(data); // 
+            });
+        }
+
+        async function getCutCountWithLocations() {
+            await axios.get(serverURL + url_cutCountLocs).then(response => {
+                data = response.data; // 
+                console.log(data); // 
+            });
+        }
+
+        async function getCutReasons() {
+            await axios.get(serverURL + url_cutReasons).then(response => {
+                data = response.data; // 
+                console.log(data); // 
+            });
+        }
+        async function getCutReasonsOfLocation(location_id) {
+            await axios.get(serverURL + url_cutReasons + "/" + location_id).then(response => {
+                data = response.data; // 
+                console.log(data); // 
+            });
+        }
+    </script>
+</body>
+</html>
